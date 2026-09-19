@@ -285,15 +285,11 @@
     height: 48px;
     display: grid;
     place-items: center;
-    font-size: 1.5rem;
-    line-height: 1;
     text-decoration: none;
-    background: var(--sun);
-    border: 1.5px solid var(--ink);
-    border-radius: 50%;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    background: none;
   }
   .dialog-wave span { display: inline-block; transform-origin: 70% 70%; animation: wave 2.2s ease-in-out infinite; }
+  .dialog-wave svg { width: 36px; height: 36px; display: block; fill: none; stroke: #ff8a1f; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .dialog-wave:focus-visible { outline-color: var(--chalk); }
   @keyframes wave {
     0%, 60%, 100% { transform: rotate(0); }
@@ -425,7 +421,7 @@
   <div class="dialog-inner">
     <button class="dialog-close" id="dialogClose" type="button" aria-label="Close">&times;</button>
     <div class="card" id="dialogCard"></div>
-    <a class="dialog-wave" href="https://wa.me/254759700444" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp" title="Chat on WhatsApp"><span aria-hidden="true">&#128075;</span></a>
+    <a class="dialog-wave" href="https://wa.me/254759700444" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp" title="Chat on WhatsApp"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg></span></a>
   </div>
 </dialog>
 
