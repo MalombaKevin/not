@@ -277,6 +277,31 @@
   .dialog-close:hover { border-color: var(--panel-mute); }
   .dialog-close:focus-visible { outline-color: var(--sun); }
 
+  .dialog-wave {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    font-size: 1.5rem;
+    line-height: 1;
+    text-decoration: none;
+    background: var(--sun);
+    border: 1.5px solid var(--ink);
+    border-radius: 50%;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  }
+  .dialog-wave span { display: inline-block; transform-origin: 70% 70%; animation: wave 2.2s ease-in-out infinite; }
+  .dialog-wave:focus-visible { outline-color: var(--chalk); }
+  @keyframes wave {
+    0%, 60%, 100% { transform: rotate(0); }
+    10%, 30% { transform: rotate(16deg); }
+    20%, 40% { transform: rotate(-10deg); }
+    50% { transform: rotate(8deg); }
+  }
+
   /* ---------- Email bubble ---------- */
   .mail-bubble {
     position: fixed;
@@ -356,7 +381,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .swap, dialog[open] { animation: none; }
+    .swap, dialog[open], .dialog-wave span { animation: none; }
     * { transition: none !important; }
   }
 </style>
@@ -400,6 +425,7 @@
   <div class="dialog-inner">
     <button class="dialog-close" id="dialogClose" type="button" aria-label="Close">&times;</button>
     <div class="card" id="dialogCard"></div>
+    <a class="dialog-wave" href="https://wa.me/254759700444" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp" title="Chat on WhatsApp"><span aria-hidden="true">&#128075;</span></a>
   </div>
 </dialog>
 
