@@ -411,6 +411,66 @@
 </a>
 
 <script>
+  // Deterrents against casual source viewing / DevTools (cannot be made absolute)
+  (function () {
+    const block = e => { e.preventDefault(); e.stopPropagation(); return false; };
+
+    // Right-click menu
+    document.addEventListener('contextmenu', block);
+
+    // Shortcuts: F12, Ctrl+U / S / P, Ctrl+Shift+I / J / C / K, Cmd+Opt+I / J / C / U
+    document.addEventListener('keydown', e => {
+      const k = e.key.toLowerCase();
+      const mod = e.ctrlKey || e.metaKey;
+      if (
+        e.key === 'F12' ||
+        (mod && ['u', 's', 'p'].includes(k)) ||
+        (mod && e.shiftKey && ['i', 'j', 'c', 'k'].includes(k)) ||
+        (e.metaKey && e.altKey && ['i', 'j', 'c', 'u'].includes(k))
+      ) return block(e);
+    }, true);
+
+    // Text selection / drag copying
+    document.addEventListener('selectstart', e => {
+      if (!/^(input|textarea)$/i.test(e.target.tagName)) block(e);
+    });
+    document.addEventListener('dragstart', block);
+
+    // DevTools detection: wipe the page when DevTools is opened
+    let tripped = false;
+    const trip = () => {
+      if (tripped) return;
+      tripped = true;
+      document.documentElement.innerHTML =
+        '<body style="margin:0;display:grid;place-items:center;height:100vh;' +
+        'font-family:sans-serif;background:#111;color:#eee">' +
+        '<p>Developer tools are not allowed on this page.</p></body>';
+    };
+
+    // 1) Docked DevTools change window inner/outer size
+    const sizeCheck = () => {
+      const t = 160;
+      if (window.outerWidth - window.innerWidth > t ||
+          window.outerHeight - window.innerHeight > t) trip();
+    };
+
+    // 2) Console getter trick: fires when the console is open
+    const el = new Image();
+    Object.defineProperty(el, 'id', { get: trip });
+    const consoleCheck = () => { console.log(el); console.clear(); };
+
+    // 3) debugger timing: stalls only while DevTools is open
+    const debuggerCheck = () => {
+      const s = performance.now();
+      (function () {}).constructor('debugger')();
+      if (performance.now() - s > 100) trip();
+    };
+
+    setInterval(() => { sizeCheck(); consoleCheck(); debuggerCheck(); }, 1000);
+  })();
+</script>
+
+<script>
   const QUOTES = [
     { t: "The journey of a thousand miles begins with a single step.", a: "Lao Tzu" },
     { t: "We are what we repeatedly do. Excellence, then, is not an act, but a habit.", a: "Will Durant" },
