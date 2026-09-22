@@ -4,6 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Motivation Calendar</title>
+<meta name="description" content="Daily motivation and Bible verses. Pick a day to read its quote or verse.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Motivation Calendar">
+<meta property="og:description" content="Daily motivation and Bible verses. Pick a day to read its quote or verse.">
+<meta property="og:url" content="https://malotivate.vercel.app/">
+<meta property="og:image" content="https://malotivate.vercel.app/api/og">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Motivation Calendar">
+<meta name="twitter:description" content="Daily motivation and Bible verses. Pick a day to read its quote or verse.">
+<meta name="twitter:image" content="https://malotivate.vercel.app/api/og">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700&family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
@@ -258,24 +270,44 @@
 
   .dialog-inner { position: relative; }
   .dialog-inner .card { padding: 26px 24px 28px; }
+  .dialog-mode { margin-bottom: 10px; }
 
-  .dialog-close {
+  .dialog-icon-btn {
     position: absolute;
     top: 12px;
-    right: 12px;
     width: 38px;
     height: 38px;
+    display: grid;
+    place-items: center;
     font: inherit;
-    font-size: 1.3rem;
-    line-height: 1;
     color: var(--chalk);
     background: transparent;
     border: 1.5px solid #3b4a72;
     border-radius: 50%;
     cursor: pointer;
   }
-  .dialog-close:hover { border-color: var(--panel-mute); }
-  .dialog-close:focus-visible { outline-color: var(--sun); }
+  .dialog-icon-btn:hover { border-color: var(--panel-mute); }
+  .dialog-icon-btn:focus-visible { outline-color: var(--sun); }
+  .dialog-icon-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .dialog-close {
+    right: 12px;
+    font-size: 1.3rem;
+    line-height: 1;
+  }
+
+  .dialog-share {
+    right: 58px;
+  }
+  .dialog-share svg { width: 18px; height: 18px; }
+
+  /* Mobile shares from inside the popup; desktop shares from the floating bubble */
+  @media (min-width: 900px) {
+    .dialog-share { display: none; }
+  }
+  @media (max-width: 899px) {
+    #shareBtn { display: none; }
+  }
 
   .dialog-wave {
     position: absolute;
@@ -298,12 +330,17 @@
     50% { transform: rotate(8deg); }
   }
 
-  /* ---------- Email bubble ---------- */
-  .mail-bubble {
+  /* ---------- Top-right action bubbles ---------- */
+  .top-actions {
     position: fixed;
     top: max(14px, env(safe-area-inset-top));
     right: max(14px, env(safe-area-inset-right));
     z-index: 20;
+    display: flex;
+    gap: 10px;
+  }
+
+  .bubble {
     width: 48px;
     height: 48px;
     display: grid;
@@ -313,9 +350,33 @@
     border: 1.5px solid var(--ink);
     border-radius: 50%;
     box-shadow: 0 4px 14px rgba(20, 33, 61, 0.25);
-    transition: transform 0.15s;
+    transition: transform 0.15s, opacity 0.15s;
+    cursor: pointer;
+    font: inherit;
   }
-  .mail-bubble:hover { transform: scale(1.07); }
+  .bubble:hover { transform: scale(1.07); }
+  .bubble:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+  /* ---------- Share toast ---------- */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: max(20px, env(safe-area-inset-bottom));
+    transform: translate(-50%, 12px);
+    z-index: 30;
+    max-width: min(90vw, 360px);
+    padding: 12px 18px;
+    background: var(--ink);
+    color: var(--chalk);
+    font-size: 0.9rem;
+    text-align: center;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(20, 33, 61, 0.3);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
   /* ---------- Desktop: quote appears on the right ---------- */
   @media (min-width: 900px) {
@@ -380,6 +441,19 @@
     .swap, dialog[open], .dialog-wave span { animation: none; }
     * { transition: none !important; }
   }
+
+  /* ---------- Footer credit ---------- */
+  .credit {
+    flex: none;
+    margin-top: 18px;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--mute);
+  }
+
+  @media (max-width: 899px) {
+    .credit { margin-top: 8px; font-size: 0.72rem; }
+  }
 </style>
 </head>
 
@@ -415,22 +489,46 @@
 
     <section class="card panel" id="quotePanel" aria-live="polite"></section>
   </div>
+
+  <footer class="credit">A Kevin Malomba Production</footer>
 </main>
 
 <dialog id="quoteDialog" aria-label="Daily message">
   <div class="dialog-inner">
-    <button class="dialog-close" id="dialogClose" type="button" aria-label="Close">&times;</button>
+    <button class="dialog-icon-btn dialog-share" id="dialogShareBtn" type="button" aria-label="Share this message" title="Share">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 15V3"></path>
+        <path d="m7 8 5-5 5 5"></path>
+        <path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path>
+      </svg>
+    </button>
+    <button class="dialog-icon-btn dialog-close" id="dialogClose" type="button" aria-label="Close">&times;</button>
+    <div class="mode dialog-mode" role="group" aria-label="Content type">
+      <button type="button" data-mode="verse" aria-pressed="false">Bible Verse</button>
+      <button type="button" data-mode="motivation" aria-pressed="true">Motivation</button>
+    </div>
     <div class="card" id="dialogCard"></div>
     <a class="dialog-wave" href="https://wa.me/254759700444" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp" title="Chat on WhatsApp"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg></span></a>
   </div>
 </dialog>
 
-<a class="mail-bubble" href="mailto:kevinmalomba@gmail.com?subject=Hello%20from%20Motivation%20Calendar" aria-label="Send an email" title="Send an email">
-  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <rect x="3" y="5" width="18" height="14" rx="2"></rect>
-    <path d="m3 7 9 6 9-6"></path>
-  </svg>
-</a>
+<div class="top-actions">
+  <button class="bubble" id="shareBtn" type="button" aria-label="Share today's message" title="Share">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 15V3"></path>
+      <path d="m7 8 5-5 5 5"></path>
+      <path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path>
+    </svg>
+  </button>
+  <a class="bubble" href="mailto:kevinmalomba@gmail.com?subject=Hello%20from%20Motivation%20Calendar" aria-label="Send an email" title="Send an email">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+      <path d="m3 7 9 6 9-6"></path>
+    </svg>
+  </a>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
   // Deterrents against casual source viewing / DevTools (cannot be made absolute)
@@ -604,19 +702,40 @@
   const dialog = document.getElementById("quoteDialog");
   const dialogCard = document.getElementById("dialogCard");
   const monthLabel = document.getElementById("monthLabel");
-  const modeButtons = document.querySelectorAll(".mode button");
+  const modeButtons = document.querySelectorAll("[data-mode]");
+  const shareBtn = document.getElementById("shareBtn");
+  const dialogShareBtn = document.getElementById("dialogShareBtn");
+  const toast = document.getElementById("toast");
   const mobileQuery = window.matchMedia("(max-width: 899px)");
 
   const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const today = () => startOfDay(new Date());
   const sameDay = (a, b) => a.getTime() === b.getTime();
   const longDate = d => `${WEEKDAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
   const state = {
     view: new Date(today().getFullYear(), today().getMonth(), 1),
     selected: today(),
     mode: "motivation"
   };
+
+  // A shared link (?date=YYYY-MM-DD&mode=verse|motivation) opens straight to that day.
+  (function applyQueryState() {
+    const params = new URLSearchParams(location.search);
+    const modeParam = params.get("mode");
+    if (modeParam === "verse" || modeParam === "motivation") state.mode = modeParam;
+
+    const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(params.get("date") || "");
+    if (dateMatch) {
+      const d = new Date(Number(dateMatch[1]), Number(dateMatch[2]) - 1, Number(dateMatch[3]));
+      if (!Number.isNaN(d.getTime())) {
+        state.selected = d;
+        state.view = new Date(d.getFullYear(), d.getMonth(), 1);
+      }
+    }
+    modeButtons.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === state.mode)));
+  })();
 
   // The same date always gives the same entry; consecutive days jump around the list.
   function entryFor(date) {
@@ -712,13 +831,29 @@
     el.classList.add("swap");
   }
 
+  function updateShareButtons() {
+    const locked = state.selected > today();
+    shareBtn.disabled = locked;
+    dialogShareBtn.disabled = locked;
+  }
+
   function renderPanel() {
     fillCard(panel);
     animate(panel);
+    updateShareButtons();
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
   }
 
   function showPopup() {
     fillCard(dialogCard);
+    updateShareButtons();
     if (!dialog.open) dialog.showModal();
   }
 
@@ -774,6 +909,57 @@
     selectDate(t);
   });
 
+  async function shareCard(triggerBtn) {
+    if (triggerBtn.disabled) return;
+
+    const date = state.selected;
+    const entry = entryFor(date);
+    const credit = MODES[state.mode].credit(entry.a);
+    const dateIso = iso(date);
+    const pageUrl = `${location.origin}${location.pathname}?date=${dateIso}&mode=${state.mode}`;
+    const imageUrl = `${location.origin}/api/og?date=${dateIso}&mode=${state.mode}`;
+    const shareText = `"${entry.t}" — ${credit}\n${longDate(date)}`;
+
+    shareBtn.disabled = true;
+    dialogShareBtn.disabled = true;
+    try {
+      let file = null;
+      try {
+        const res = await fetch(imageUrl);
+        if (res.ok) {
+          const blob = await res.blob();
+          file = new File([blob], `motivation-calendar-${dateIso}.png`, { type: "image/png" });
+        }
+      } catch (_) { /* fall back to link-only sharing below */ }
+
+      const shareData = file && navigator.canShare && navigator.canShare({ files: [file] })
+        ? { files: [file], title: "Motivation Calendar", text: shareText, url: pageUrl }
+        : { title: "Motivation Calendar", text: shareText, url: pageUrl };
+
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(pageUrl);
+        showToast("Link copied to clipboard");
+        if (file) window.open(imageUrl, "_blank", "noopener");
+      }
+    } catch (err) {
+      if (err && err.name !== "AbortError") {
+        try {
+          await navigator.clipboard.writeText(pageUrl);
+          showToast("Sharing failed — link copied instead");
+        } catch (_) {
+          showToast("Sharing isn't available here");
+        }
+      }
+    } finally {
+      updateShareButtons();
+    }
+  }
+
+  shareBtn.addEventListener("click", () => shareCard(shareBtn));
+  dialogShareBtn.addEventListener("click", () => shareCard(dialogShareBtn));
+
   // Popup: close button, tap outside the card, and Esc (built in)
   document.getElementById("dialogClose").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", e => { if (e.target === dialog) dialog.close(); });
@@ -785,6 +971,7 @@
 
   renderCalendar();
   renderPanel();
+  showPopup();
 </script>
 </body>
 </html>
