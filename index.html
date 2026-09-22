@@ -1065,7 +1065,7 @@
       } catch (_) { /* fall back to link-only sharing below */ }
 
       const shareData = file && navigator.canShare && navigator.canShare({ files: [file] })
-        ? { files: [file], title: "Motivation Calendar", text: shareText, url: pageUrl }
+        ? { files: [file], title: "Motivation Calendar", url: pageUrl }
         : { title: "Motivation Calendar", text: shareText, url: pageUrl };
 
       if (navigator.share) {
