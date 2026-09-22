@@ -740,24 +740,46 @@
 
     // 1) Docked DevTools change window inner/outer size
     const sizeCheck = () => {
-      const t = 160;
+      const t = 140;
       if (window.outerWidth - window.innerWidth > t ||
           window.outerHeight - window.innerHeight > t) trip();
     };
 
-    // 2) Console getter trick: fires when the console is open
-    const el = new Image();
-    Object.defineProperty(el, 'id', { get: trip });
-    const consoleCheck = () => { console.log(el); console.clear(); };
+    // 2) Console getter trick: fires when an inspected object is expanded with the console open
+    const probe = new Image();
+    Object.defineProperty(probe, 'id', { get: trip });
 
-    // 3) debugger timing: stalls only while DevTools is open
-    const debuggerCheck = () => {
-      const s = performance.now();
-      (function () {}).constructor('debugger')();
-      if (performance.now() - s > 100) trip();
+    // 3) toString trick: fires when console.log formats the value for display
+    const strProbe = { toString() { trip(); return ''; } };
+
+    const consoleCheck = () => {
+      console.log(probe);
+      console.log('%c', strProbe);
+      console.clear();
     };
 
-    setInterval(() => { sizeCheck(); consoleCheck(); debuggerCheck(); }, 1000);
+    // 4) debugger timing: stalls only while DevTools is open
+    const debuggerStmt = Function('debugger');
+    const debuggerCheck = () => {
+      const s = performance.now();
+      debuggerStmt();
+      if (performance.now() - s > 60) trip();
+    };
+
+    // Run the cheap debugger-timing check every frame for fast detection;
+    // throttle the pricier size/console checks so the loop stays light.
+    let lastThrottled = 0;
+    const loop = now => {
+      if (tripped) return;
+      if (now - lastThrottled > 250) {
+        lastThrottled = now;
+        sizeCheck();
+        consoleCheck();
+      }
+      debuggerCheck();
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
   })();
 </script>
 
