@@ -219,10 +219,40 @@
     color: var(--sun);
   }
 
-  .card .meta {
+  .card .meta-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
     margin: 0 0 12px;
+  }
+
+  .card .meta {
+    margin: 0;
     font-size: 0.9rem;
     color: var(--panel-mute);
+  }
+
+  .share-inline {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    padding: 4px;
+    display: grid;
+    place-items: center;
+    color: #ff8a1f;
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  .share-inline svg { width: 20px; height: 20px; display: block; }
+  .share-inline:hover { background: rgba(255, 138, 31, 0.14); }
+  .share-inline:focus-visible { outline-color: var(--sun); }
+  .share-inline:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  @media (min-width: 900px) {
+    .share-inline { display: none; }
   }
 
   .card blockquote {
@@ -296,15 +326,7 @@
     line-height: 1;
   }
 
-  .dialog-share {
-    right: 58px;
-  }
-  .dialog-share svg { width: 18px; height: 18px; }
-
   /* Mobile shares from inside the popup; desktop shares from the floating bubble */
-  @media (min-width: 900px) {
-    .dialog-share { display: none; }
-  }
   @media (max-width: 899px) {
     #shareBtn { display: none; }
   }
@@ -495,14 +517,14 @@
 
 <dialog id="quoteDialog" aria-label="Daily message">
   <div class="dialog-inner">
-    <button class="dialog-icon-btn dialog-share" id="dialogShareBtn" type="button" aria-label="Share this message" title="Share">
+    <button class="dialog-icon-btn dialog-close" id="dialogClose" type="button" aria-label="Close">&times;</button>
+    <button class="share-inline" id="dialogShareBtn" type="button" aria-label="Share this message" title="Share">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M12 15V3"></path>
         <path d="m7 8 5-5 5 5"></path>
         <path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path>
       </svg>
     </button>
-    <button class="dialog-icon-btn dialog-close" id="dialogClose" type="button" aria-label="Close">&times;</button>
     <div class="mode dialog-mode" role="group" aria-label="Content type">
       <button type="button" data-mode="verse" aria-pressed="false">Bible Verse</button>
       <button type="button" data-mode="motivation" aria-pressed="true">Motivation</button>
@@ -811,15 +833,18 @@
       body.append(title, note);
     } else {
       const entry = entryFor(d);
+      const metaRow = document.createElement("div");
+      metaRow.className = "meta-row";
       const meta = document.createElement("p");
       meta.className = "meta";
       meta.textContent = sameDay(d, now) ? `Today, ${longDate(d)}` : longDate(d);
+      metaRow.append(meta);
       const bq = document.createElement("blockquote");
       bq.textContent = entry.t;
       const who = document.createElement("p");
       who.className = "author";
       who.textContent = mode.credit(entry.a);
-      body.append(meta, bq, who);
+      body.append(metaRow, bq, who);
     }
 
     el.append(numeral, body);
@@ -853,6 +878,8 @@
 
   function showPopup() {
     fillCard(dialogCard);
+    const metaRow = dialogCard.querySelector(".meta-row");
+    if (metaRow) metaRow.append(dialogShareBtn);
     updateShareButtons();
     if (!dialog.open) dialog.showModal();
   }
@@ -874,7 +901,11 @@
     state.mode = mode;
     modeButtons.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
     renderPanel();
-    if (dialog.open) fillCard(dialogCard);
+    if (dialog.open) {
+      fillCard(dialogCard);
+      const metaRow = dialogCard.querySelector(".meta-row");
+      if (metaRow) metaRow.append(dialogShareBtn);
+    }
   }
 
   modeButtons.forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
