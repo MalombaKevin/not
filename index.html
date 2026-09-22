@@ -219,34 +219,32 @@
     color: var(--sun);
   }
 
-  .card .meta-row {
+  .card .day-row {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 10px;
-    margin: 0 0 12px;
   }
 
   .card .meta {
-    margin: 0;
+    margin: 0 0 12px;
     font-size: 0.9rem;
     color: var(--panel-mute);
   }
 
   .share-inline {
     flex: none;
-    width: 30px;
-    height: 30px;
-    padding: 4px;
-    display: grid;
-    place-items: center;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 6px 10px;
     color: #ff8a1f;
     background: transparent;
-    border: 0;
-    border-radius: 50%;
+    border: 1.5px solid #ff8a1f;
+    border-radius: 8px;
     cursor: pointer;
   }
-  .share-inline svg { width: 20px; height: 20px; display: block; }
   .share-inline:hover { background: rgba(255, 138, 31, 0.14); }
   .share-inline:focus-visible { outline-color: var(--sun); }
   .share-inline:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -304,26 +302,26 @@
 
   .dialog-icon-btn {
     position: absolute;
-    top: 12px;
+    top: -46px;
+    right: 4px;
     width: 38px;
     height: 38px;
     display: grid;
     place-items: center;
     font: inherit;
-    color: var(--chalk);
-    background: transparent;
-    border: 1.5px solid #3b4a72;
+    background: var(--ink);
+    border: 0;
     border-radius: 50%;
     cursor: pointer;
   }
-  .dialog-icon-btn:hover { border-color: var(--panel-mute); }
+  .dialog-icon-btn:hover { opacity: 0.75; }
   .dialog-icon-btn:focus-visible { outline-color: var(--sun); }
   .dialog-icon-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
   .dialog-close {
-    right: 12px;
-    font-size: 1.3rem;
+    font-size: 1.8rem;
     line-height: 1;
+    color: #ff3b30;
   }
 
   /* Mobile shares from inside the popup; desktop shares from the floating bubble */
@@ -518,13 +516,7 @@
 <dialog id="quoteDialog" aria-label="Daily message">
   <div class="dialog-inner">
     <button class="dialog-icon-btn dialog-close" id="dialogClose" type="button" aria-label="Close">&times;</button>
-    <button class="share-inline" id="dialogShareBtn" type="button" aria-label="Share this message" title="Share">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M12 15V3"></path>
-        <path d="m7 8 5-5 5 5"></path>
-        <path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path>
-      </svg>
-    </button>
+    <button class="share-inline" id="dialogShareBtn" type="button" aria-label="Share this message" title="Share">SHARE</button>
     <div class="mode dialog-mode" role="group" aria-label="Content type">
       <button type="button" data-mode="verse" aria-pressed="false">Bible Verse</button>
       <button type="button" data-mode="motivation" aria-pressed="true">Motivation</button>
@@ -820,6 +812,10 @@
     numeral.textContent = d.getDate();
     numeral.setAttribute("aria-hidden", "true");
 
+    const dayRow = document.createElement("div");
+    dayRow.className = "day-row";
+    dayRow.append(numeral);
+
     const body = document.createElement("div");
 
     if (locked) {
@@ -833,21 +829,18 @@
       body.append(title, note);
     } else {
       const entry = entryFor(d);
-      const metaRow = document.createElement("div");
-      metaRow.className = "meta-row";
       const meta = document.createElement("p");
       meta.className = "meta";
       meta.textContent = sameDay(d, now) ? `Today, ${longDate(d)}` : longDate(d);
-      metaRow.append(meta);
       const bq = document.createElement("blockquote");
       bq.textContent = entry.t;
       const who = document.createElement("p");
       who.className = "author";
       who.textContent = mode.credit(entry.a);
-      body.append(metaRow, bq, who);
+      body.append(meta, bq, who);
     }
 
-    el.append(numeral, body);
+    el.append(dayRow, body);
   }
 
   function animate(el) {
@@ -878,8 +871,7 @@
 
   function showPopup() {
     fillCard(dialogCard);
-    const metaRow = dialogCard.querySelector(".meta-row");
-    if (metaRow) metaRow.append(dialogShareBtn);
+    dialogCard.querySelector(".day-row").append(dialogShareBtn);
     updateShareButtons();
     if (!dialog.open) dialog.showModal();
   }
@@ -903,8 +895,7 @@
     renderPanel();
     if (dialog.open) {
       fillCard(dialogCard);
-      const metaRow = dialogCard.querySelector(".meta-row");
-      if (metaRow) metaRow.append(dialogShareBtn);
+      dialogCard.querySelector(".day-row").append(dialogShareBtn);
     }
   }
 
